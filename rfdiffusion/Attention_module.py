@@ -10,51 +10,50 @@ class FeedForwardLayer(nn.Module):#前馈神经网络层
         super(FeedForwardLayer, self).__init__()
         self.norm = nn.LayerNorm(d_model) #进行归一化操作
         self.linear1 = nn.Linear(d_model, d_model*r_ff) #线性层，输入个数为d_model，输出个数为d_model*r_ff
-        self.dropout = nn.Dropout(p_drop)
-        self.linear2 = nn.Linear(d_model*r_ff, d_model)
+        self.dropout = nn.Dropout(p_drop) #传入一个概率值p，随机将输入的张量元素置为0
+        self.linear2 = nn.Linear(d_model*r_ff, d_model) #线性层，输入元素个数为d_model*r_ff,输出元素个数为d_model
 
-        self.reset_parameter()
+        self.reset_parameter() #调用方法reset_parameter()，重新设置参数
 
     def reset_parameter(self):
         # initialize linear layer right before ReLu: He initializer (kaiming normal)
-        nn.init.kaiming_normal_(self.linear1.weight, nonlinearity='relu')
-        nn.init.zeros_(self.linear1.bias)
+        nn.init.kaiming_normal_(self.linear1.weight, nonlinearity='relu') #以正态分布的方式随机初始化self.linear1的权重参数
+        nn.init.zeros_(self.linear1.bias) #将self.linear1的偏置全部设置为0
 
         # initialize linear layer right before residual connection: zero initialize
-        nn.init.zeros_(self.linear2.weight)
-        nn.init.zeros_(self.linear2.bias)
+        nn.init.zeros_(self.linear2.weight) #将self.linear2的权重参数设置为0
+        nn.init.zeros_(self.linear2.bias) #将self.linear2的偏置参数设置为0
     
     def forward(self, src):
-        src = self.norm(src)
-        src = self.linear2(self.dropout(F.relu_(self.linear1(src))))
-        return src
+        src = self.norm(src) #先对输入的原始数据进行一个归一化的操作
+        src = self.linear2(self.dropout(F.relu_(self.linear1(src)))) #对src进行线性操作，经过一个relu操作，经过一个dropout操作，最后再经过一个线性操作
+        return src #返回输出的张量
 
-class Attention(nn.Module):
+class Attention(nn.Module): #构建注意力网络层
     # calculate multi-head attention
-    def __init__(self, d_query, d_key, n_head, d_hidden, d_out):
+    def __init__(self, d_query, d_key, n_head, d_hidden, d_out): #构造函数，输入参数有d_query,d_key,n_head,d_hidden,d_out
         super(Attention, self).__init__()
-        self.h = n_head
-        self.dim = d_hidden
+        self.h = n_head #将n_head值赋值给self.h
+        self.dim = d_hidden #将d_hidden值赋值给self.dim
+        self.to_q = nn.Linear(d_query, n_head*d_hidden, bias=False) #线性层self.to_q
+        self.to_k = nn.Linear(d_key, n_head*d_hidden, bias=False) #线性层self.to_k
+        self.to_v = nn.Linear(d_key, n_head*d_hidden, bias=False) #线性层self.to_v
         #
-        self.to_q = nn.Linear(d_query, n_head*d_hidden, bias=False)
-        self.to_k = nn.Linear(d_key, n_head*d_hidden, bias=False)
-        self.to_v = nn.Linear(d_key, n_head*d_hidden, bias=False)
-        #
-        self.to_out = nn.Linear(n_head*d_hidden, d_out)
-        self.scaling = 1/math.sqrt(d_hidden)
+        self.to_out = nn.Linear(n_head*d_hidden, d_out) #线性层self.to_out
+        self.scaling = 1/math.sqrt(d_hidden) #定义了一个缩放因子
         #
         # initialize all parameters properly
-        self.reset_parameter()
+        self.reset_parameter() #初始化所有的参数
 
     def reset_parameter(self):
         # query/key/value projection: Glorot uniform / Xavier uniform
-        nn.init.xavier_uniform_(self.to_q.weight)
-        nn.init.xavier_uniform_(self.to_k.weight)
-        nn.init.xavier_uniform_(self.to_v.weight)
+        nn.init.xavier_uniform_(self.to_q.weight) #使用均匀分布随机初始化self.to_q线性层的权重参数
+        nn.init.xavier_uniform_(self.to_k.weight) #使用均匀分布随机初始化self.to_k线性层的权重参数
+        nn.init.xavier_uniform_(self.to_v.weight) #使用均匀分布随机初始化self.to_v线性层的权重参数
 
         # to_out: right before residual connection: zero initialize -- to make it sure residual operation is same to the Identity at the begining
-        nn.init.zeros_(self.to_out.weight)
-        nn.init.zeros_(self.to_out.bias)
+        nn.init.zeros_(self.to_out.weight) #将self.to_out线性层的权重参数设置为0
+        nn.init.zeros_(self.to_out.bias) #将self.to_out线性层的偏置参数设置为0
 
     def forward(self, query, key, value):
         B, Q = query.shape[:2]
