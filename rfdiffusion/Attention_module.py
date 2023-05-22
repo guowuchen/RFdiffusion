@@ -5,11 +5,11 @@ import math
 from opt_einsum import contract as einsum
 from rfdiffusion.util_module import init_lecun_normal
 
-class FeedForwardLayer(nn.Module):
-    def __init__(self, d_model, r_ff, p_drop=0.1):
+class FeedForwardLayer(nn.Module):#前馈神经网络层
+    def __init__(self, d_model, r_ff, p_drop=0.1): #传入参数有d_model、r_ff和p_drop三个
         super(FeedForwardLayer, self).__init__()
-        self.norm = nn.LayerNorm(d_model)
-        self.linear1 = nn.Linear(d_model, d_model*r_ff)
+        self.norm = nn.LayerNorm(d_model) #进行归一化操作
+        self.linear1 = nn.Linear(d_model, d_model*r_ff) #线性层，输入个数为d_model，输出个数为d_model*r_ff
         self.dropout = nn.Dropout(p_drop)
         self.linear2 = nn.Linear(d_model*r_ff, d_model)
 
