@@ -12,9 +12,9 @@ import math
 
 # Module contains classes and functions to generate initial embeddings
 
-class PositionalEncoding2D(nn.Module):
+class PositionalEncoding2D(nn.Module): #位置编码组件
     # Add relative positional encoding to pair features
-    def __init__(self, d_model, minpos=-32, maxpos=32, p_drop=0.1):
+    def __init__(self, d_model, minpos=-32, maxpos=32, p_drop=0.1): #输入的参数有d_model,minpos=-32,maxpos=32,p_drop=0.1
         super(PositionalEncoding2D, self).__init__()
         self.minpos = minpos
         self.maxpos = maxpos
